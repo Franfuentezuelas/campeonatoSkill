@@ -40,6 +40,10 @@ import com.fjtm.campeonato.service.JwtService;
 import com.fjtm.campeonato.service.PruebaService;
 import com.fjtm.campeonato.service.UserService;
 
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.transaction.Transactional;
 
 import com.fjtm.campeonato.dto.ItemDto;
@@ -50,6 +54,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/prueba")
 @RequiredArgsConstructor
+@Tag(name = "Prueba", description = "Operaciones relacionadas con las pruebas")
 public class PruebaController {
 
     private final PruebaService pruebaService;
@@ -64,6 +69,15 @@ public class PruebaController {
 
     @PostMapping("/nueva")
     @Transactional
+    @Operation(summary  = "Crea una nueva prueba",
+                description = "Permite crear una nueva prueba con los datos proporcionados y guarda los items asociados. También guarda un archivo asociado a la prueba. Todo se realiza en una transaccion para asegurar la integridad de los datos.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Formulario recibido y guardado con éxito"),
+        @ApiResponse(responseCode = "400", description = "Error al guardar la prueba o los items"),
+        @ApiResponse(responseCode = "404", description = "No se encontró la especialidad o la prueba con ese enunciado ya existe"),
+        @ApiResponse(responseCode = "401", description = "Token inválido o caducado"),
+        @ApiResponse(responseCode = "500", description = "Error en el servidor al guardar la prueba, archivo o items")
+    })
     public ResponseEntity<?> handleFormData(
             @RequestHeader("Authorization") String token,
             @RequestParam("enunciado") String enunciado,
@@ -193,6 +207,14 @@ public class PruebaController {
     }
     
     @PostMapping("/all")
+    @Operation(
+        summary = "Obtener todas las pruebas por especialidad", 
+        description = "Este endpoint permite obtener todas las pruebas disponibles filtradas por especialidad.",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Lista de pruebas obtenidas exitosamente"),
+            @ApiResponse(responseCode = "404", description = "No se encontraron pruebas para la especialidad")
+        }
+    )
     public ResponseEntity<?> allPruebas( @RequestHeader("Authorization") String token) {
         // obtengo todas las pruebas y dejo solo las de la categoria del experto
         String especialidad=jwtService.extractEspecialidad(token);

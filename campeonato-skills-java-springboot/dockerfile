@@ -1,0 +1,14 @@
+# Etapa 1: Imagen de ejecución
+FROM openjdk:17-jdk-slim
+
+# Establecemos el directorio de trabajo en el contenedor
+WORKDIR /app
+
+# Copiamos el archivo .jar desde el directorio local
+COPY target/campeonato-skills-java-springboot-0.0.1-SNAPSHOT.jar app.jar
+
+# Exponemos el puerto 9000
+EXPOSE 9000
+
+# Comando para ejecutar la aplicación Spring Boot en el puerto 9000
+ENTRYPOINT ["java", "-jar", "app.jar", "--server.port=9000"]

@@ -1,0 +1,20 @@
+apiVersion: networking.k8s.io/v1  # Versión de la API de Ingress
+kind: Ingress                     # Tipo de recurso que representa este archivo
+metadata:
+  name: angular-ingress           # Nombre único para este Ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: / # Anotación para redirigir las rutas correctamente
+spec:
+  rules:
+  - host: campeonato.local        # Dominio que usará el Ingress
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: angular-service # Nombre del servicio del front-end
+            port:
+              number: 4200        # Puerto que expone el servicio
+
+

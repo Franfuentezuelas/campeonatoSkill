@@ -1,0 +1,32 @@
+apiVersion: apps/v1                     # Versión de la API de Kubernetes.
+kind: Deployment                        # Tipo de recurso: Deployment.
+metadata:
+  name: prometheus                      # Nombre del Deployment.
+  labels:
+    app: prometheus                     # Etiqueta para identificar el recurso.
+spec:
+  replicas: 1                           # Cantidad de réplicas (1 instancia de Prometheus).
+  selector:
+    matchLabels:
+      app: prometheus                   # Selector para enlazar Pods creados.
+  template:                             # Plantilla para los Pods generados.
+    metadata:
+      labels:
+        app: prometheus                 # Etiqueta asignada a los Pods.
+    spec:
+      containers:
+      - name: prometheus                # Nombre del contenedor.
+        image: prom/prometheus          # Imagen Docker de Prometheus.
+        args:
+        - --config.file=/etc/prometheus/prometheus.yml
+        - --rule.file=/etc/prometheus/rules/rules.yaml # Archivo de reglas para alertas.
+        ports:
+        - containerPort: 9090           # Puerto donde Prometheus escuchará.
+        volumeMounts:                   # Monta el volumen del ConfigMap.
+        - mountPath: /etc/prometheus/rules
+          name: prometheus-rules-volume
+      volumes:                          # Define los volúmenes disponibles en los Pods.
+      - name: prometheus-rules-volume   # Nombre del volumen.
+        configMap:                      # Vincula el volumen con un ConfigMap.
+          name: prometheus-rules        # Nombre del ConfigMap a usar.
+

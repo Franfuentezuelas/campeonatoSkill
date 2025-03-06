@@ -40,7 +40,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // Excluir solo las rutas públicas del filtro JWT (pero no todo "/api/")
         if (requestURI.equals("/competidor/all") 
         || requestURI.equals("/api/login") 
-        || requestURI.equals("/api/register")) {
+        || requestURI.equals("/api/register")
+        //|| requestURI.equals("/swagger-ui.html")
+        || requestURI.startsWith("/v3/api-docs")
+        || requestURI.startsWith("/swagger-ui")) {
             filterChain.doFilter(request, response);
             return;
         }        
@@ -79,6 +82,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return bearerToken;  // Extrae el token JWT de la cabecera Authorization
         }
         return null;
+    }
+
+    private boolean isPublicRoute(String requestURI) {
+        // Excluir rutas públicas, como Swagger, login, y registro
+        return requestURI.equals("/api/login") 
+                || requestURI.equals("/api/register")
+                || requestURI.equals("/swagger-ui.html")
+                || requestURI.equals("/api-docs")
+                || requestURI.startsWith("/swagger-ui/")
+                || requestURI.startsWith("/api-docs/");
     }
 }
 

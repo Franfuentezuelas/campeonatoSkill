@@ -1,0 +1,27 @@
+apiVersion: apps/v1         # API utilizada para manejar aplicaciones avanzadas.
+kind: Deployment            # Recurso tipo Deployment para gestionar Redis.
+metadata:
+  name: redis-deployment    # Nombre único para el Deployment de Redis.
+spec:
+  replicas: 1               # Solo un pod de Redis será ejecutado (sin escalado horizontal).
+  selector:
+    matchLabels:            # Selector que vincula este Deployment con sus Pods.
+      app: redis
+  template:                 # Plantilla para los Pods que se generarán.
+    metadata:
+      labels:
+        app: redis          # Etiqueta asignada a los Pods del Deployment de Redis.
+    spec:
+      containers:
+      - name: redis-container            # Nombre del contenedor Redis.
+        image: redis/redis-stack:latest  # Imagen Docker para Redis Stack (incluye Redis y más funcionalidades).
+        ports:                          # Define el puerto expuesto por el contenedor.
+        - containerPort: 6379            # Puerto estándar que usa Redis.
+        resources:                      # Configuración de recursos para escalado vertical.
+          requests:                     # Recursos mínimos garantizados para el contenedor y su escalado vertical maximo.
+            memory: "256Mi"             # Mínimo de memoria reservada (256 MiB).
+            cpu: "500m"                 # Mínimo de CPU reservada (0.5 cores).
+          limits:                       # Límite máximo de recursos permitidos.
+            memory: "1Gi"               # Límite máximo de memoria: 1 GiB.
+            cpu: "2"                    # Límite máximo de CPU: 2 cores.
+

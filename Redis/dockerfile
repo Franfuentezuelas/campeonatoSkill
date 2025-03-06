@@ -1,0 +1,12 @@
+# Usa la imagen oficial de Redis
+FROM redis/redis-stack:latest
+
+# Exponemos el puerto 6379 (puerto de Redis)
+EXPOSE 6379
+
+# Exponemos el puerto 9091 (puerto para la interfaz web de Redis)
+EXPOSE 9091
+
+# Comando por defecto para iniciar Redis
+CMD ["redis-server"]
+

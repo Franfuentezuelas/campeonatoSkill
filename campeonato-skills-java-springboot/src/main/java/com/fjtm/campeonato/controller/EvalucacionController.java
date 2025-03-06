@@ -28,7 +28,11 @@ import com.fjtm.campeonato.service.ItemService;
 import com.fjtm.campeonato.service.JwtService;
 import com.fjtm.campeonato.service.PuntuacionService;
 import com.fjtm.campeonato.service.UserService;
-import com.fjtm.campeonato.util.calculos.ScoreCalculator;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+
 
 import jakarta.persistence.criteria.CriteriaBuilder.In;
 import jakarta.transaction.Transactional;
@@ -50,6 +54,12 @@ public class EvalucacionController {
     private final CompetidorService competidorService;
 
     @GetMapping("/all")
+    @Operation(summary = "Obtener todas las evaluaciones",
+               description = "Este endpoint devuelve todas las evaluaciones filtradas por especialidad.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Lista de evaluaciones obtenidas correctamente"),
+        @ApiResponse(responseCode = "404", description = "No se encontraron evaluaciones")
+    })
     public List<EvaluacionDto> getAll( @RequestHeader("Authorization") String token) {
         String especialidad=jwtService.extractEspecialidad(token);
         // obtengo todas las evaluaciones
@@ -65,6 +75,13 @@ public class EvalucacionController {
 
     @PostMapping("/experto")
     @Transactional
+    @Operation(summary = "Asignar experto a una evaluación",
+               description = "Este endpoint asigna un experto a una evaluación existente y cambia el estado a seleccionado, impidiendo que otro experto la seleccione. Ademas todo se realiza en una transacción para asegurar la integridad de los datos.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Experto asignado correctamente"),
+        @ApiResponse(responseCode = "404", description = "Evaluación o experto no encontrado"),
+        @ApiResponse(responseCode = "403", description = "Experto ya asignado a la evaluación")
+    })
     public List<EvaluacionItem> setExperto( @RequestHeader("Authorization") String token, @RequestBody Long idEvaluacion) {
         String especialidad=jwtService.extractEspecialidad(token);
         // obtener la evaluacion con el id
@@ -109,18 +126,17 @@ public class EvalucacionController {
 
     @PostMapping("/guardar")
     @Transactional
+    @Operation(summary = "Guardar evaluación con valoraciones",
+               description = "Este endpoint guarda una evaluación con las valoraciones de los ítems, no se realiza el calculo de la puntuación. Ademas todo se realiza en una transacción para asegurar la integridad de los datos.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Evaluación guardada correctamente"),
+        @ApiResponse(responseCode = "404", description = "Evaluación o experto no encontrado"),
+        @ApiResponse(responseCode = "403", description = "Experto no es el mismo que el que guardo en la evaluacion"),
+        @ApiResponse(responseCode = "403", description = "No existe la evaluacion con ese id"),
+        @ApiResponse(responseCode = "400", description = "Valoraciones no válidas")
+    })
     public ResponseEntity<String> saveEvaluacion( @RequestHeader("Authorization") String token, @RequestBody GuardarDto guardarDto) {
-        System.out.println("---------------------------------------");
-        System.out.println(guardarDto.getEvaluacionId());
-        guardarDto.getValoraciones().forEach(item->{
-            System.out.println(item.getId());
-            System.out.println(item.getValoracion());
-            System.out.println(item.getComentarios());
-        }
-        );
-        
-
-        System.out.println("---------------------------------------");
+       
         // obtener la evaluacion con el id
         final Evaluacion evaluacion = evaluacionService.findById(guardarDto.getEvaluacionId()).orElseThrow(() -> new NotFoundException("No existe la evaluacion con ese id", "/evaluacion/guardar"));
         // obtener el experto
@@ -138,7 +154,12 @@ public class EvalucacionController {
                 evalItem=evaluacionItemService.edit(evalItem);
         });
 
-        evaluacion.setEstado("borrador");
+        if (evaluacion.getEstado().equals("evaluado")) {
+            evaluacion.setEstado("evaluado");
+        }else{
+            evaluacion.setEstado("borrador");
+        }
+
         evaluacionService.save(evaluacion);
 
         return ResponseEntity.ok().body("Evaluacion guardada con exito");
@@ -146,6 +167,14 @@ public class EvalucacionController {
 
     @PostMapping("/finalizar")
     @Transactional
+    @Operation(summary = "Finalizar evaluación",
+               description = "Este endpoint finaliza una evaluación y cambia el estado a evaluado, calcula la puntuacion, y se actualiza en la evaluacion ademas se ajusta tambien la nota total del competidor para la clasificacion de ganadores. Ademas todo se realiza en una transacción para asegurar la integridad de los datos.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Evaluacion finalizada con exito"),
+        @ApiResponse(responseCode = "403", description = "No existe el usuario indicado"),
+        @ApiResponse(responseCode = "403", description = "Experto no es el mismo que el que guardo en la evaluacion"),
+        @ApiResponse(responseCode = "403", description = "No existe la evaluacion con ese id")
+    })
     public ResponseEntity<String> finalizarEvaluacion( @RequestHeader("Authorization") String token, @RequestBody GuardarDto guardarDto) {
         
         // obtener la evaluacion con el id
@@ -171,8 +200,7 @@ public class EvalucacionController {
         
         itemEvaluados.forEach(item -> {
             
-            evaluacion.setPuntuacionObtenida(evaluacion.getPuntuacionObtenida()+ item.getValoracion()*item.getItem().getPeso()/item.getItem().getGradosConsecuencia());
-       
+            evaluacion.setPuntuacionObtenida(evaluacion.getPuntuacionObtenida()+ ((float) item.getValoracion()*item.getItem().getPeso()/item.getItem().getGradosConsecuencia()));
         });
 
         // calcular la parte de la puntuacion de la evaluacion seria 

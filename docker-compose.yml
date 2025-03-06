@@ -1,0 +1,86 @@
+version: '3.8'  # Puedes ajustar la versión de Docker Compose según sea necesario
+
+services:
+
+  # Servicio para Redis
+  redis:
+    image: redis/redis-stack:latest  # Imagen correcta definida
+    container_name: redis-container
+    restart: always
+    ports:
+      # - "6379:6379"    # Puerto para Redis (acceso a la base de datos)
+      - "9091:8001"    # Puerto para el administrador de Redis
+    networks:
+      - app-network 
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]  # Comando para verificar que Redis está listo
+      interval: 10s   # Intervalo entre cada prueba de salud
+      timeout: 5s     # Tiempo de espera por cada comprobación
+      retries: 10
+    volumes:
+      - redis-data:/data  # Definición del volumen para la persistencia de datos
+
+  # Servicio para la base de datos MySQL
+  mysql:
+    image: franfuentezuelas/campeonalo-skills-bd:v1.0
+    container_name: mysql-container
+    environment:
+      MYSQL_ROOT_PASSWORD: Fran1234
+      MYSQL_DATABASE: campeonato-skills
+    ports:
+      - "3306:3306"
+    networks:
+      - app-network
+    volumes:
+      - mysql-data:/var/lib/mysql  # Persistencia de datos
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-pFran1234"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # Servicio para la API Spring Boot
+  springboot:
+    # image: franfuentezuelas/campeonato-skills-java-springboot:v1.1
+    image: franfuentezuelas/campeonato-skills-java-springboot:v2.5
+    container_name: springboot-container
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/campeonato-skills
+      # SPRING_DATASOURCE_URL: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DB:campeonato-skills}
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: Fran1234
+      # puede ser que no tenga que apuntar al servicio de Redis, puede que tenga que apuntar al contenedor??????
+      SPRING_REDIS_HOST: ${REDIS_HOST}
+      SPRING_REDIS_PORT: ${REDIS_PORT}
+      # SPRING_REDIS_HOST: redis  # Cambiado para que apunte al servicio de Redis, no al contenedor
+      # SPRING_REDIS_PORT: 6379  # Puerto por defecto de Redis
+      #   SPRING_REDIS_TIMEOUT: 30s  # Tiempo de espera por cada comprobación
+    depends_on:
+      - redis
+      - mysql
+    ports:
+      - "9000:9000"
+    networks:
+      - app-network
+
+  # Servicio para la aplicación Angular
+  angular:
+    image: franfuentezuelas/campeonato-skills-angular:v1.0
+    container_name: angular-container
+    ports:
+      - "4200:4200"
+    depends_on:
+      - springboot
+    networks:
+      - app-network
+
+# Redes
+networks:
+  app-network:
+    driver: bridge
+
+# Volúmenes
+volumes:
+
+  mysql-data:  # Definición del volumen para la persistencia de datos
+  redis-data:  # Definición del volumen para la persistencia de datos

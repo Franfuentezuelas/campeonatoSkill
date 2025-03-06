@@ -1,0 +1,53 @@
+apiVersion: v1                # API para recursos básicos.
+kind: PersistentVolume        # Crea un volumen físico (almacenamiento persistente).
+metadata:
+  name: mysql-pv              # Nombre del volumen persistente (único en el clúster).
+spec:
+  capacity:                   # Capacidad de almacenamiento del volumen.
+    storage: 10Gi             # El volumen puede almacenar hasta 10 GiB de datos.
+  accessModes:                # Modo de acceso al volumen.
+    - ReadWriteOnce           # Solo un nodo puede leer y escribir al mismo tiempo.
+  hostPath:                   # Directorio del sistema host usado para almacenamiento.
+    path: /mnt/data           # Ruta física donde se almacenarán los datos.
+---
+apiVersion: v1
+kind: PersistentVolumeClaim   # Solicitud para usar un volumen persistente.
+metadata:
+  name: mysql-pvc             # Nombre de la reclamación del volumen.
+spec:
+  accessModes:
+    - ReadWriteOnce           # Mismo modo que en el PersistentVolume.
+  resources:                  # Tamaño solicitado para este recurso.
+    requests:
+      storage: 10Gi           # Solicita 10 GiB de almacenamiento.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-deployment      # Nombre único del Deployment para MySQL.
+spec:
+  replicas: 1                 # Solo se ejecutará un único pod de MySQL (sin escalado horizontal).
+  selector:
+    matchLabels:              # Selector para asociar este Deployment con sus Pods.
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql            # Etiqueta para identificar los Pods de MySQL.
+    spec:
+      containers:
+      - name: mysql-container # Nombre del contenedor MySQL.
+        image: franfuentezuelas/campeonalo-skills-bd:v1.0 # Imagen Docker que contiene MySQL configurado.
+        env:                  # Variables de entorno para configurar MySQL.
+        - name: MYSQL_ROOT_PASSWORD
+          value: Fran1234 # Contraseña del usuario root (usa secretos en producción).
+        - name: MYSQL_DATABASE
+          value: campeonato-skills   # Nombre de la base de datos predeterminada.
+        volumeMounts:         # Montar el volumen persistente en el contenedor.
+        - mountPath: /var/lib/mysql # Ruta en el contenedor donde se almacenarán los datos.
+          name: mysql-storage
+      volumes:
+      - name: mysql-storage   # Nombre del volumen definido previamente.
+        persistentVolumeClaim:
+          claimName: mysql-pvc # Reclama el almacenamiento solicitado (PVC).
+

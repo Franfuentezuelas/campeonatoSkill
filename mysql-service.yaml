@@ -1,0 +1,13 @@
+# mysql-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql  # Asegúrate de que este nombre es "mysql"
+spec:
+  selector:
+    app: mysql
+  ports:
+    - protocol: TCP
+      port: 3306
+      targetPort: 3306
+      # Solo accesible dentro del clúster (puedes cambiar a NodePort si es necesario).

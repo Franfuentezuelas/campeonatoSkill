@@ -17,6 +17,10 @@ import com.fjtm.campeonato.service.CompetidorService;
 import com.fjtm.campeonato.service.EspecialidadService;
 import com.fjtm.campeonato.service.JwtService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
@@ -34,6 +38,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 @RestController
 @RequestMapping("/competidor")
 @RequiredArgsConstructor
+@Tag(name = "Competidor", description = "Operaciones relacionadas con los competidores")
 public class CompetidorController {
 
     private final CompetidorService serviceCompetidor;
@@ -43,6 +48,11 @@ public class CompetidorController {
     private final JwtService jwtService;
 
     @GetMapping("/all")
+    @Operation(summary = "Obtener todos los competidores", description = "Recupera todos los competidores ordenados por especialidad.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Lista de competidores obtenida correctamente"),
+        @ApiResponse(responseCode = "404", description = "No se encontraron competidores")
+    })
     public ResponseEntity<List<Competidor>> getAll() {
         // obtengo toda la lista de especialidades, y filtro por codigo no ADM para que no este administrador
         List<Competidor> competidores = serviceCompetidor.findAll()
@@ -57,6 +67,10 @@ public class CompetidorController {
     }
 
     @GetMapping("/winner")
+    @Operation(summary = "Obtener todos los ganadores", description = "Recupera la lista de ganadores ordenados por especialidad.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Lista de ganadores obtenida correctamente")
+    })
     public ResponseEntity<List<GanadorDto>> getAllGanadores() {
         // obtengo toda la lista de especialidades, y filtro por codigo no ADM para que no este administrador
         List<GanadorDto> competidores = serviceCompetidor.findAllWinner().stream()
@@ -67,6 +81,11 @@ public class CompetidorController {
     }
 
     @GetMapping("/allesp")
+    @Operation(summary = "Obtener competidores por especialidad", description = "Recupera los competidores filtrados por especialidad del usuario autenticado.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Lista de competidores por especialidad obtenida correctamente"),
+        @ApiResponse(responseCode = "404", description = "No se encontraron competidores")
+    })
     public ResponseEntity<List<Competidor>> getAllCompetidoresEsp(@RequestHeader("Authorization") String token) {
         // obtengo toda la lista de especialidades, y filtro por codigo no ADM para que no este administrador
 
@@ -84,6 +103,11 @@ public class CompetidorController {
     }
     
     @PostMapping("/save")
+    @Operation(summary = "Guardar un nuevo competidor", description = "Registra un nuevo competidor en el sistema.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Competidor guardado correctamente"),
+        @ApiResponse(responseCode = "404", description = "Error al guardar el competidor")
+    })
     public ResponseEntity<Competidor> saveCompetidor(@RequestHeader("Authorization") String token, @RequestBody CompetidorDto competidorDto) {
         
         Competidor competidor = competidorDtoConverter.convertToEntity(competidorDto);
@@ -96,6 +120,11 @@ public class CompetidorController {
     }
 
     @PostMapping("/update")
+    @Operation(summary = "Actualizar competidor", description = "Actualiza los datos de un competidor existente.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Competidor actualizado correctamente"),
+        @ApiResponse(responseCode = "404", description = "Competidor no encontrado")
+    })
     public ResponseEntity<Competidor> updateUser(@RequestHeader("Authorization") String token, @RequestBody CompetidorUpdateRequest requestUpdate) {
         // convierto el objeto a entidad
         Competidor competidor = competidorDtoConverter.convertToEntity(requestUpdate.getCompetidorDto());
@@ -110,6 +139,11 @@ public class CompetidorController {
     }
 
     @PostMapping("/delete")
+    @Operation(summary = "Eliminar un competidor", description = "Elimina un competidor del sistema.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Competidor eliminado correctamente"),
+        @ApiResponse(responseCode = "404", description = "Competidor no encontrado")
+    })
     public ResponseEntity<?> delete(@RequestBody Long id) {
         Competidor optionalCompetidor = serviceCompetidor.findById(id).orElseThrow(() -> new NotFoundException("No existe el competidor con ese id", "/competidor/delete"));
         
@@ -117,6 +151,11 @@ public class CompetidorController {
     }
 
     @GetMapping("/evaluacion")
+    @Operation(summary = "Obtener competidores para evaluación", description = "Recupera los competidores pendientes para evaluación.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Competidores para evaluación obtenidos correctamente"),
+        @ApiResponse(responseCode = "404", description = "No se encontraron competidores")
+    })
     public ResponseEntity<List<Competidor>> getAllEvaluacion(@RequestHeader("Authorization") String token) {
         String especialidad=jwtService.extractEspecialidad(token);
 

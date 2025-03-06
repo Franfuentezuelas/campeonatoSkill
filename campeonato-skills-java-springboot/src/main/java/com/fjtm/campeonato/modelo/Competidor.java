@@ -42,7 +42,7 @@ public class Competidor {
 
     @Column(nullable = true)
     @Range(min = 0, max = 100, message = "El valor debe estar entre 0 y 100")
-    private float notaTotal=0;
+    private float notaTotal;
     
     @ManyToOne
     @JoinColumn(name = "especialidades_id_especialidad", nullable = false)

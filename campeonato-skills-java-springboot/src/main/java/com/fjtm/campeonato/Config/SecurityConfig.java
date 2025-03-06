@@ -37,7 +37,7 @@ public class SecurityConfig {
         .cors(cors -> cors.configurationSource(corsConfig.corsConfigurationSource()))
             .csrf(csrf -> csrf.disable()) // Desactiva CSRF
             .authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                .requestMatchers(  "/competidor/all","/css/**", "/js/**", "/images/**", "/favicon.png").permitAll() // Excluir del filtro JWT
+                .requestMatchers(  "/competidor/all","/css/**", "/js/**", "/images/**", "/favicon.png", "/swagger-ui.html", "/v3/api-docs/**", "/swagger-ui/**", "/v3/api-docs").permitAll() // Excluir del filtro JWT
                 //.requestMatchers("/api/login", "/api/register").permitAll() // Permitir POST sin autenticación
                 .requestMatchers(HttpMethod.POST,"/api/login").permitAll() // Permitir POST sin autenticación
                 .requestMatchers("api/admin/**", "/experto/admin/**", "/api/register").hasRole("ADMIN")

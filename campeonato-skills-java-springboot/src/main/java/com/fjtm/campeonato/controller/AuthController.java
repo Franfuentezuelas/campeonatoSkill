@@ -39,8 +39,20 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 @RestController
 @RequestMapping("/api")
+@Tag(name = "Auth", description = "API de autenticación y autorización")
 public class AuthController {
 
     private AuthenticationManager authentication;
@@ -58,13 +70,26 @@ public class AuthController {
     }
 
     @PostMapping("/register") // POST /register
+    @Operation(summary = "Registrar un nuevo usuario", description = "Permite registrar un nuevo usuario en el sistema")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Usuario registrado correctamente"),
+        @ApiResponse(responseCode = "400", description = "Solicitud inválida", content = @Content)
+    })
     public ResponseEntity<?> register(@RequestBody UserDto userDto, HttpServletRequest request, HttpServletResponse httpHeaders) {
         return (ResponseEntity<?>) ResponseEntity.ok();
     }
 
     @PostMapping("/login") // POST /login
+    @Operation(summary = "Iniciar sesión", description = "Permite a un usuario iniciar sesión y obtener un token JWT")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Inicio de sesión exitoso", 
+            headers = @Header(name = "Authorization", description = "Token JWT de autenticación"),
+            content = @Content(schema = @Schema(implementation = LoginDto.class))
+        ),
+        @ApiResponse(responseCode = "401", description = "Credenciales incorrectas o token no válido", content = @Content)
+    })
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest, HttpServletRequest request, HttpServletResponse httpHeaders) {
-        try {
+        
             String tokenHeader = request.getHeader("Authorization");
             System.out.println("Token recibido en header: " + tokenHeader);
             if(tokenHeader != null && tokenHeader !="") {
@@ -112,25 +137,36 @@ public class AuthController {
                 System.out.println("Credenciales incorrectas para usuario: " + nombre);
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Credenciales incorrectas");
             }
-    
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token no valido");
-        }
     }
 
     @GetMapping("/logout")
+    @Operation(summary = "Cerrar sesión", description = "Invalida el token JWT y cierra la sesión del usuario")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Sesión cerrada correctamente"),
+        @ApiResponse(responseCode = "401", description = "Token no válido", content = @Content)
+    })
     public ResponseEntity<String> logout(@RequestHeader("Authorization") String token) {
         jwtService.invalidateToken(token);
         return ResponseEntity.ok("Sesión cerrada");
     }
 
     @GetMapping("/admin/hola")
+    @Operation(summary = "Saludo para Admin", description = "Devuelve un saludo si el usuario es administrador")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Saludo para administrador"),
+        @ApiResponse(responseCode = "401", description = "No autorizado", content = @Content)
+    })
     public ResponseEntity<String> adminHola(@RequestHeader("Authorization") String token) {
         
         return ResponseEntity.ok("Hola admin");
     }
+
     @GetMapping("/admin/experto")
+    @Operation(summary = "Saludo para Experto", description = "Devuelve un saludo si el usuario tiene rol de experto")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Saludo para experto"),
+        @ApiResponse(responseCode = "401", description = "No autorizado", content = @Content)
+    })
     public ResponseEntity<String> ExpertoHola(@RequestHeader("Authorization") String token) {
         
         return ResponseEntity.ok("Hola Experto");

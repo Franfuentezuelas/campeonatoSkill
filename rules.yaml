@@ -1,0 +1,20 @@
+groups:                         # Los grupos organizan las reglas.
+- name: pod-resources           # Nombre del grupo de reglas.
+  rules:                        # Lista de reglas definidas.
+  - alert: HighMemoryUsage      # Nombre de la alerta (alerta de memoria alta).
+    expr: sum(container_memory_working_set_bytes{pod=~".*-deployment.*"}) > 800000000
+    for: 2m                     # El estado de la condición debe mantenerse por 2 minutos.
+    labels:                     # Etiquetas adicionales para esta alerta.
+      severity: warning         # Nivel de severidad: "warning" o "critical".
+    annotations:                # Información adicional para mostrar cuando se active la alerta.
+      summary: "Alto uso de memoria en {{ $labels.pod }}"
+      description: "El pod {{ $labels.pod }} está utilizando más de 800Mi de memoria."
+
+  - alert: HighCPUUsage         # Nombre de la alerta (alerta de CPU alta).
+    expr: sum(rate(container_cpu_usage_seconds_total{pod=~".*-deployment.*"}[1m])) > 0.8
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Alto uso de CPU en {{ $labels.pod }}"
+      description: "El pod {{ $labels.pod }} está utilizando más del 80% de CPU."

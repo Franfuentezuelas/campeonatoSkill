@@ -23,6 +23,9 @@ import com.fjtm.campeonato.modelo.User;
 import com.fjtm.campeonato.service.EspecialidadService;
 import com.fjtm.campeonato.service.UserService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -37,6 +40,11 @@ public class UserController {
     private final EspecialidadService serviceEspecialidad;
     
     @PostMapping("/registerall")
+    @Operation(summary = "Registrar múltiples usuarios", description = "Permite registrar varios usuarios a la vez.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Usuarios registrados correctamente"),
+            @ApiResponse(responseCode = "400", description = "Error en el registro de los usuarios")
+    })
     public ResponseEntity<List<User>> registerAllUser(@RequestHeader("Authorization") String token,
      @RequestBody List<UserDto> usersDto) { 
         List<User> users = usersDto.stream().map(userDto -> {
@@ -53,6 +61,11 @@ public class UserController {
     }
 
     @PostMapping("/register")
+    @Operation(summary = "Registrar un usuario", description = "Permite registrar un usuario en el sistema.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Usuario registrado correctamente"),
+            @ApiResponse(responseCode = "400", description = "Error en el registro del usuario")
+    })
     public ResponseEntity<User> registerUser(@RequestHeader("Authorization") String token, @RequestBody UserDto userDto) {
         
         User user = userDtoConverter.convertToEntity(userDto);
@@ -64,6 +77,8 @@ public class UserController {
     }
 
     @GetMapping("/all")
+    @Operation(summary = "Obtener todos los usuarios", description = "Devuelve la lista de todos los usuarios, excepto los administradores.")
+    @ApiResponse(responseCode = "200", description = "Usuarios obtenidos correctamente")
     public ResponseEntity<List<User>> getAll() {
         // obtengo toda la lista de especialidades, y filtro por codigo no ADM para que no este administrador
         List<User> usuarios = serviceUser.findAll().stream()
@@ -77,6 +92,11 @@ public class UserController {
     }
 
     @PostMapping("/save")
+    @Operation(summary = "Guardar un usuario", description = "Permite guardar un usuario en el sistema.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Usuario guardado correctamente"),
+            @ApiResponse(responseCode = "400", description = "Error al guardar el usuario")
+    })
     public ResponseEntity<User> saveUser(@RequestHeader("Authorization") String token, @RequestBody UserDto userDto) {
         
         User user = userDtoConverter.convertToEntity(userDto);
@@ -90,6 +110,11 @@ public class UserController {
     }
 
     @PostMapping("/update")
+    @Operation(summary = "Actualizar un usuario", description = "Permite actualizar la información de un usuario.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Usuario actualizado correctamente"),
+            @ApiResponse(responseCode = "400", description = "Error al actualizar el usuario")
+    })
     public ResponseEntity<?> updateUser(@RequestHeader("Authorization") String token, @RequestBody UserDto userDto) {
         
         if(userDto.getPassword()==null){
@@ -107,6 +132,11 @@ public class UserController {
     }
 
     @PostMapping("/delete")
+    @Operation(summary = "Eliminar un usuario", description = "Permite eliminar un usuario del sistema.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Usuario eliminado correctamente"),
+            @ApiResponse(responseCode = "400", description = "El usuario no existe")
+    })
     public ResponseEntity<?> delete(@RequestBody UserDto userDto) {
         Optional<User> optionalUser = serviceUser.findByUsuario(userDto.getUsuario());
         

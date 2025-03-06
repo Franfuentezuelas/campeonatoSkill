@@ -1,0 +1,67 @@
+apiVersion: apps/v1         # Versión de la API usada para manejar deployments.
+kind: Deployment            # Define que el recurso es un Deployment, que administra la creación y escalado de Pods.
+metadata:                   # Metadatos que identifican el recurso.
+  name: backend-deployment  # Nombre del Deployment. Este debe ser único dentro del namespace.
+spec:                       # Especificaciones del Deployment.
+  replicas: 3               # Número inicial de réplicas (Pods) del back-end.
+  selector:                 # Define qué Pods serán gestionados por este Deployment.
+    matchLabels:            # Especifica las etiquetas que deben coincidir con los Pods.
+      app: backend          # Los Pods deben tener la etiqueta app=backend.
+  template:                 # Plantilla para los Pods que se van a crear.
+    metadata:               # Metadatos aplicados a cada Pod.
+      labels:               # Etiquetas del Pod, utilizadas para selección y organización.
+        app: backend        # Clasifica los Pods como "backend".
+    spec:                   # Define cómo se configura cada Pod.
+      containers:           # Lista de contenedores que correrán en el Pod.
+      - name: backend-container         # Nombre del contenedor dentro del Pod (puede ser útil para depuración).
+        image: franfuentezuelas/campeonato-skills-java-springboot:v2.5  # Imagen Docker que contiene la aplicación Spring Boot.
+        #image: franfuentezuelas/campeonato-skills-java-springboot:v2.5  # Imagen Docker que contiene la aplicación Spring Boot.
+        ports:                          # Puertos que expone este contenedor.
+        - containerPort: 9000           # Puerto 9000 para la aplicación Spring Boot.
+        resources:                      # Define los recursos necesarios.
+          requests:                     # Recursos mínimos asegurados para el contenedor.
+            memory: "128Mi"             # Solicitud mínima de memoria (128 MiB).
+            cpu: "500m"                 # Solicitud mínima de CPU (500 milicores, medio core).
+          limits:                       # Recursos máximos permitidos.
+            memory: "256Mi"             # Límite de memoria (256 MiB).
+            cpu: "1000m"                # Límite de CPU (1 core).
+        env:                            # Configuración de variables de entorno.
+        - name: SPRING_DATASOURCE_URL
+          value: jdbc:mysql://mysql:3306/campeonato-skills
+        - name: SPRING_DATASOURCE_USERNAME
+          value: root
+        - name: SPRING_DATASOURCE_PASSWORD
+          value: Fran1234
+        - name: SPRING_REDIS_HOST
+          value: redis
+        - name: SPRING_REDIS_PORT
+          value: "6379"
+
+---
+apiVersion: autoscaling/v2   # Versión del Horizontal Pod Autoscaler (HPA).
+kind: HorizontalPodAutoscaler
+metadata:
+  name: backend-hpa          # Nombre del HPA asociado al back-end.
+spec:
+  scaleTargetRef:            # Referencia al recurso que será escalado.
+    apiVersion: apps/v1      # Versión del recurso.
+    kind: Deployment         # Tipo de recurso que será escalado.
+    name: backend-deployment # Nombre del Deployment que manejará el HPA.
+  minReplicas: 1             # Número mínimo de réplicas permitidas.
+  maxReplicas: 10            # Número máximo de réplicas permitidas.
+  metrics:                   # Lista de métricas para el escalado.
+  - type: Resource           # Primera métrica basada en recursos.
+    resource:
+      name: cpu              # Métrica: uso de CPU.
+      target:
+        type: Utilization
+        averageUtilization: 70 # Escalar si el uso promedio supera el 70%.
+  - type: Resource           # Segunda métrica basada en recursos.
+    resource:
+      name: memory           # Métrica: uso de memoria.
+      target:
+        type: Utilization
+        averageUtilization: 70 # Escalar si el uso promedio supera el 70%.
+
+
+

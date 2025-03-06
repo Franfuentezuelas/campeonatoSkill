@@ -1,0 +1,54 @@
+apiVersion: apps/v1         # La versión de la API que Kubernetes usa para manejar deployments.
+kind: Deployment            # Este recurso es un Deployment, utilizado para manejar réplicas de pods.
+metadata:                   # Metadatos que identifican y categorizan el recurso.
+  name: angular-deployment  # Nombre único del Deployment (frontal de Angular).
+spec:                       # Define las especificaciones del Deployment.
+  replicas: 3               # Cantidad inicial de pods que se ejecutarán (escala horizontal).
+  selector:                 # Selector para asociar este Deployment con Pods específicos.
+    matchLabels:            # Estas etiquetas deben coincidir con las de los Pods gestionados.
+      app: angular          # Etiqueta clave-valor (app=angular) usada para identificar los Pods.
+  template:                 # Plantilla que describe cómo deben ser los Pods generados.
+    metadata:               # Metadatos para los Pods.
+      labels:               # Etiquetas asignadas a cada Pod creado.
+        app: angular        # El Pod tiene la etiqueta app=angular.
+    spec:                   # Especificaciones del Pod.
+      containers:           # Lista de contenedores que se ejecutarán en este Pod.
+      - name: angular-container          # Nombre del contenedor dentro del Pod.
+        image: franfuentezuelas/campeonato-skills-angular:v3.5  # Imagen Docker que se usará.
+        resources:                        # Límite y solicitud de recursos del contenedor.
+          requests:                       # Recursos mínimos reservados para el contenedor.
+            memory: "64Mi"                # Reserva mínima de memoria: 64 MiB.
+            cpu: "250m"                   # Reserva mínima de CPU: 250 milicores.
+          limits:                         # Recursos máximos permitidos.
+            memory: "128Mi"               # Límite de memoria: 128 MiB.
+            cpu: "1000m"
+        env:
+        - name: BACKEND_URL
+          value: "backend-service:9000/"  # URL base del backend.
+          #value: "backend-service.default.svc.cluster.local:9000/"  # URL base del backend.
+---
+apiVersion: autoscaling/v2   # Versión API para el recurso HorizontalPodAutoscaler.
+kind: HorizontalPodAutoscaler # Habilita el escalado horizontal basado en métricas.
+metadata:
+  name: angular-hpa          # Nombre único del HPA asociado al Deployment Angular.
+spec:
+  scaleTargetRef:            # Especifica cuál Deployment escalar.
+    apiVersion: apps/v1      # Versión de API del Deployment.
+    kind: Deployment         # Escalar un recurso de tipo Deployment.
+    name: angular-deployment # Nombre del Deployment a escalar.
+  minReplicas: 1             # Número mínimo de réplicas.
+  maxReplicas: 10            # Número máximo de réplicas permitidas.
+  metrics:                   # Lista de métricas para el escalado.
+  - type: Resource           # Primera métrica basada en recursos.
+    resource:
+      name: cpu              # Métrica: uso de CPU.
+      target:
+        type: Utilization    # Objetivo: porcentaje de uso promedio.
+        averageUtilization: 80 # Escalar si el uso promedio supera el 80%.
+  - type: Resource           # Segunda métrica basada en recursos.
+    resource:
+      name: memory           # Métrica: uso de memoria.
+      target:
+        type: Utilization
+        averageUtilization: 75 
+
